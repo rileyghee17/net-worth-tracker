@@ -4,7 +4,6 @@ import yfinance as yf
 import plotly.express as px
 import os
 import datetime
-import json
 
 st.set_page_config(layout="wide")
 st.title("My Net-Worth Tracker")
@@ -13,50 +12,22 @@ st.title("My Net-Worth Tracker")
 tab1, tab2, tab3 = st.tabs(["Overview", "Forecast", "History"])
 US_TICKERS = ["BABA", "XPEV", "AUR", "NVDA"]
 HISTORY_FILE = "net_worth_history.csv"
-SETTINGS_FILE = "user_inputs.json"
-
-
-def load_settings():
-    if os.path.exists(SETTINGS_FILE):
-        try:
-            with open(SETTINGS_FILE, "r") as f:
-                return json.load(f)
-        except Exception:
-            return {}
-    return {}
-
-
-def save_settings(data: dict) -> None:
-    with open(SETTINGS_FILE, "w") as f:
-        json.dump(data, f)
-
-
-settings = load_settings()
 
 # ===== Overview Tab =====
 with tab1:
     # Cash input
     cash = st.number_input(
-        "💵 Cash Balance (AUD)",
-        min_value=0.0,
-        value=float(settings.get("cash", 21081.0)),
-        step=100.0,
+        "💵 Cash Balance (AUD)", min_value=0.0, value=21081.0, step=100.0
     )
     st.markdown("---")
 
     # Investment Property
     st.header("🏠 Investment Property")
     property_val = st.number_input(
-        "Market Value (AUD)",
-        min_value=0.0,
-        value=float(settings.get("property_val", 605000.0)),
-        step=1000.0,
+        "Market Value (AUD)", min_value=0.0, value=605000.0, step=1000.0
     )
     loan = st.number_input(
-        "Loan Balance (AUD)",
-        min_value=0.0,
-        value=float(settings.get("loan", 541735.0)),
-        step=1000.0,
+        "Loan Balance (AUD)", min_value=0.0, value=541735.0, step=1000.0
     )
     total_equity = property_val - loan
     equity_pct = (total_equity / property_val * 100) if property_val else 0
@@ -69,10 +40,7 @@ with tab1:
     # Superannuation input
     st.header("💰 Superannuation Balance (AUD)")
     super_balance = st.number_input(
-        "Balance",
-        min_value=0.0,
-        value=float(settings.get("super_balance", 68000.0)),
-        step=1000.0,
+        "Balance", min_value=0.0, value=68000.0, step=1000.0
     )
     st.write(f"Your super balance is ${super_balance:,.2f}")
     st.markdown("---")
@@ -88,28 +56,20 @@ with tab1:
         "AUR": "Aurora Innovation (NASDAQ)",
         "NVDA": "NVIDIA Corp. (US)",
     }
-    defaults = {"INR.AX": 4854, "IVV.AX": 88, "VAS.AX": 65, "BABA": 9.39, "XPEV": 58.07, "AUR": 142.20, "NVDA": 4.88}
+    defaults = {"INR.AX":4854, "IVV.AX":88, "VAS.AX":65, "BABA":9.39, "XPEV":58.07, "AUR":142.20, "NVDA":4.88}
     holdings = {}
-    stored_holdings = settings.get("holdings", {})
     for sym, name in tickers.items():
         is_us = sym in US_TICKERS
-        val = stored_holdings.get(sym, defaults[sym])
-        if not is_us:
-            val = int(val)
         holdings[sym] = st.number_input(
             f"{name} ({sym}) shares",
             min_value=0.0 if is_us else 0,
-            value=val,
+            value=defaults[sym],
             step=0.01 if is_us else 1,
             format="%.2f" if is_us else "%d",
             key=f"hold_{sym}"
         )
     btc_amount = st.number_input(
-        "₿ Bitcoin Holding",
-        min_value=0.0,
-        value=float(settings.get("btc_amount", 0.018302)),
-        step=0.0001,
-        format="%.6f",
+        "₿ Bitcoin Holding", min_value=0.0, value=0.018302, step=0.0001, format="%.6f"
     )
     st.markdown("---")
 
@@ -143,12 +103,7 @@ with tab1:
     # Net Worth Summary and Goal
     st.header("💡 Current Net Worth")
     st.write(f"**${net_worth:,.2f} AUD**")
-    goal = st.number_input(
-        "🎯 Net Worth Goal (AUD)",
-        min_value=0.0,
-        value=float(settings.get("goal", 1000000.0)),
-        step=1000.0,
-    )
+    goal = st.number_input("🎯 Net Worth Goal (AUD)", min_value=0.0, value=1000000.0, step=1000.0)
     progress = net_worth/goal if goal else 0
     st.progress(progress)
     st.write(f"{progress*100:.1f}% of goal reached")
@@ -168,29 +123,10 @@ with tab1:
 # ===== Forecast Tab =====
 with tab2:
     st.header("🔮 Net Worth Forecast")
-    contrib_freq = st.selectbox(
-        "Contribution Frequency",
-        ["None", "Weekly", "Monthly", "Yearly"],
-        index=["None", "Weekly", "Monthly", "Yearly"].index(settings.get("contrib_freq", "None")),
-    )
-    contrib_prop = st.number_input(
-        "Additional Property Contribution per period (AUD)",
-        min_value=0.0,
-        value=float(settings.get("contrib_prop", 0.0)),
-        step=100.0,
-    )
-    contrib_invest = st.number_input(
-        "Additional Investments & Crypto Contribution per period (AUD)",
-        min_value=0.0,
-        value=float(settings.get("contrib_invest", 0.0)),
-        step=100.0,
-    )
-    contrib_super = st.number_input(
-        "Additional Super Contribution per period (AUD)",
-        min_value=0.0,
-        value=float(settings.get("contrib_super", 0.0)),
-        step=100.0,
-    )
+    contrib_freq = st.selectbox("Contribution Frequency", ["None","Weekly","Monthly","Yearly"], index=0)
+    contrib_prop = st.number_input("Additional Property Contribution per period (AUD)", min_value=0.0, value=0.0, step=100.0)
+    contrib_invest = st.number_input("Additional Investments & Crypto Contribution per period (AUD)", min_value=0.0, value=0.0, step=100.0)
+    contrib_super = st.number_input("Additional Super Contribution per period (AUD)", min_value=0.0, value=0.0, step=100.0)
     if contrib_freq=="Weekly": freq_mul=52
     elif contrib_freq=="Monthly": freq_mul=12
     elif contrib_freq=="Yearly": freq_mul=1
@@ -198,33 +134,10 @@ with tab2:
     annual_prop_contrib=contrib_prop*freq_mul
     annual_inv_contrib=contrib_invest*freq_mul
     annual_sup_contrib=contrib_super*freq_mul
-    prop_rate=st.slider(
-        "Property Annual Growth Rate (%)",
-        0.0,
-        20.0,
-        float(settings.get("prop_rate", 5.0)),
-        0.1,
-    )
-    share_rate=st.slider(
-        "Shares & Crypto Annual Growth Rate (%)",
-        0.0,
-        20.0,
-        float(settings.get("share_rate", 7.0)),
-        0.1,
-    )
-    super_rate=st.slider(
-        "Superannuation Growth Rate (%)",
-        0.0,
-        20.0,
-        float(settings.get("super_rate", 4.0)),
-        0.1,
-    )
-    years=st.slider(
-        "Forecast Horizon (years)",
-        1,
-        30,
-        int(settings.get("years", 5)),
-    )
+    prop_rate=st.slider("Property Annual Growth Rate (%)",0.0,20.0,5.0,0.1)
+    share_rate=st.slider("Shares & Crypto Annual Growth Rate (%)",0.0,20.0,7.0,0.1)
+    super_rate=st.slider("Superannuation Growth Rate (%)",0.0,20.0,4.0,0.1)
+    years=st.slider("Forecast Horizon (years)",1,30,5)
     prop_vals=[property_val]
     for i in range(1,years+1): prop_vals.append(prop_vals[-1]*(1+prop_rate/100)+annual_prop_contrib)
     eq_list=[(pv-loan)*(user_pct/100) for pv in prop_vals]
@@ -252,24 +165,3 @@ with tab3:
         st.line_chart(fortnightly)
     else:
         st.info("No history found. Save a snapshot to populate history.")
-
-# Persist user inputs to disk
-save_settings(
-    {
-        "cash": cash,
-        "property_val": property_val,
-        "loan": loan,
-        "super_balance": super_balance,
-        "holdings": holdings,
-        "btc_amount": btc_amount,
-        "goal": goal,
-        "contrib_freq": contrib_freq,
-        "contrib_prop": contrib_prop,
-        "contrib_invest": contrib_invest,
-        "contrib_super": contrib_super,
-        "prop_rate": prop_rate,
-        "share_rate": share_rate,
-        "super_rate": super_rate,
-        "years": years,
-    }
-)
