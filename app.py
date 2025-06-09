@@ -34,17 +34,18 @@ super_default = get_param_float("super_balance", 68000.0)
 
 ticker_defaults = {"INR.AX":4854, "IVV.AX":88, "VAS.AX":65, "BABA":9.39, "XPEV":58.07, "AUR":142.20, "NVDA":4.88}
 US_TICKERS = ["BABA", "XPEV", "AUR", "NVDA"]
-holdings_default = {sym: get_param_float(f"hold_{sym}", ticker_defaults[sym]) for sym in ticker_defaults}
-btc_default = get_param_float("btc_amount", 0.018302)
-goal_default = get_param_float("goal", 1000000.0)
-contrib_freq_default = get_param_str("contrib_freq", "None")
-contrib_prop_default = get_param_float("contrib_prop", 0.0)
-contrib_inv_default = get_param_float("contrib_invest", 0.0)
-contrib_sup_default = get_param_float("contrib_super", 0.0)
-prop_rate_default = get_param_float("prop_rate", 5.0)
-share_rate_default = get_param_float("share_rate", 7.0)
-super_rate_default = get_param_float("super_rate", 4.0)
-years_default = get_param_int("years", 5)
+# Use ints for non-US holdings, floats for US
+holdings_default = {
+    sym: (
+        get_param_float(f"hold_{sym}", ticker_defaults[sym])
+        if sym in US_TICKERS else
+        get_param_int(f"hold_{sym}", ticker_defaults[sym])
+    )
+    for sym in ticker_defaults
+}
+US_TICKERS = ["BABA", "XPEV", "AUR", "NVDA"]
+holdings_default = {sym: (get_param_float(f"hold_{sym}", ticker_defaults[sym]) if sym in US_TICKERS else get_param_int(f"hold_{sym}", ticker_defaults[sym])) for sym in ticker_defaults}
+
 
 # Navigation tabs
 tab1, tab2, tab3 = st.tabs(["Overview", "Forecast", "History"])
